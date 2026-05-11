@@ -1,22 +1,35 @@
-.PHONY: install dev test docker-build docker-run docker-down k8s-apply
+.PHONY: install test lint format run docker-build docker-up docker-down clean
 
 install:
-	pip install -r requirements.txt
-
-dev:
-	uvicorn app.main:app --reload --port 8000
+	pip install -e ".[dev]"
 
 test:
-	pytest -v --tb=short
+	pytest tests/
+
+lint:
+	black --check src/ tests/
+	isort --check-only src/ tests/
+	flake8 src/ tests/
+	mypy src/
+
+format:
+	black src/ tests/
+	isort src/ tests/
+
+run:
+	python -m src.model_serving.main
 
 docker-build:
-	docker build -t mlops-serving:latest .
+	docker build -t model-serving:latest -f docker/Dockerfile .
 
-docker-run:
-	docker run -d --name mlops-api -p 8000:8000 mlops-serving:latest
+docker-up:
+	docker-compose -f docker/docker-compose.yaml up -d
 
 docker-down:
-	docker stop mlops-api && docker rm mlops-api
+	docker-compose -f docker/docker-compose.yaml down
 
-k8s-apply:
-	kubectl apply -f k8s/
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	find . -type d -name ".mypy_cache" -exec rm -rf {} +
+	rm -rf dist/ build/ *.egg-info

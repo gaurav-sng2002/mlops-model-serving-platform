@@ -1,0 +1,10 @@
+versioning:
+  enabled: false
+
+models:
+  - name: "house_prices"
+    source: "local"
+    path: "./models/house_prices_rf.pkl"
+    framework: "sklearn"
+    device: "cpu"
+    warmup: true
